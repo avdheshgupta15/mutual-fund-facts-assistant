@@ -1,6 +1,7 @@
 import chromadb
 import re
 import time
+import os
 from sentence_transformers import SentenceTransformer, CrossEncoder
 from groq import Groq
 from rank_bm25 import BM25Okapi
@@ -132,7 +133,12 @@ INTENT_EXAMPLES = {
     ],
 }
 
-reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+USE_RERANKER = os.getenv("USE_RERANKER", "true").lower() == "true"
+
+if USE_RERANKER:
+    reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+else:
+    reranker = None
 intent_names = []
 intent_texts = []
 
@@ -634,32 +640,36 @@ def ask_rag(question):
     results["documents"][0] = combined_documents
     results["metadatas"][0] = combined_metadatas
 
-    # Rerank the hybrid candidates using a CrossEncoder
-    rerank_pairs = [
-        [question, doc]
-        for doc in results["documents"][0]
-    ]
+    # Rerank the hybrid candidates only when CrossEncoder is enabled
+    if USE_RERANKER:
+        rerank_pairs = [
+            [question, doc]
+            for doc in results["documents"][0]
+        ]
 
-    reranker_start = time.time()
+        reranker_start = time.time()
 
-    rerank_scores = reranker.predict(rerank_pairs)
+        rerank_scores = reranker.predict(rerank_pairs)
 
-    print(f"⏱ RERANKER TIME: {time.time() - reranker_start:.2f} seconds")
+        print(f"⏱ RERANKER TIME: {time.time() - reranker_start:.2f} seconds")
 
-    print("DEBUG RERANKER SCORES:")
-    for score, doc, meta in zip(
-        rerank_scores,
-        results["documents"][0],
-        results["metadatas"][0]
-    ):
-        print(
-            "chunk",
-            meta.get("chunk_id"),
-            "file",
-            meta.get("source_file"),
-            "score",
-            round(float(score), 3)
-        )
+        print("DEBUG RERANKER SCORES:")
+        for score, doc, meta in zip(
+            rerank_scores,
+            results["documents"][0],
+            results["metadatas"][0]
+        ):
+            print(
+                "chunk",
+                meta.get("chunk_id"),
+                "file",
+                meta.get("source_file"),
+                "score",
+                round(float(score), 3)
+            )
+    else:
+        rerank_scores = [0] * len(results["documents"][0])
+        print("CrossEncoder reranker disabled.")
 
     # Rank all candidates using the CrossEncoder
     reranked_all = sorted(
