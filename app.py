@@ -40,7 +40,7 @@ st.write(
 st.info("Facts-only. No investment advice.")
 
 # Supported funds
-st.markdown("#### Supported Mutual Funds")
+st.markdown("#### Supported Quant Mutual Funds")
 
 fund1, fund2, fund3, fund4, fund5 = st.columns(5)
 
