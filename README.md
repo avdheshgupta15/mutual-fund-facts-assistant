@@ -56,10 +56,10 @@ Official Public Documents
 → Heading-aware chunking  
 → Metadata enrichment  
 → Sentence Transformer embeddings  
-→ ChromaDB vector database  
-→ Semantic + BM25 hybrid retrieval  
-→ Cross-encoder reranking  
-→ Groq LLM generation  
+→ ChromaDB vector database
+→ Semantic + BM25 hybrid retrieval
+→ Optional Cross-encoder reranking
+→ Groq LLM generation
 → Factual answer with official source citation
 
 ### Main Technologies
